@@ -6,20 +6,21 @@ using UnityEngine.UI;
 
 public class stickBall : MonoBehaviour
 {
-    public float facingAngle =0;
-    float x=0;
-    float z=0;
-    Vector2 unitV2;
-    public GameObject cam;
-    float distCam =5;
-    public float size =1;
-    public GameObject[] category = new GameObject[3];
-    public bool[] unlocked = new bool[3];
-    public float[] categorySize = new float[3];
+    [SerializeField]
+    public List<Category> categories = new List<Category>(3); 
     public float velocity = 300f;
     public float rotation = 100f;
+    public GameObject cam;
+    public Text UIsize;
+    public Transform core;
 
-    public GameObject UIsize;
+    private float facingAngle = 0;
+    private float distCam = 5;
+    private float size = 1;
+    private float x = 0;
+    private float z = 0;
+    private Vector2 unitV2;
+
     void Start()
     {
         unlockPickUpCategories();
@@ -27,30 +28,30 @@ public class stickBall : MonoBehaviour
 
     void Update()
     {
-        x = Input.GetAxis("Horizontal")*Time.deltaTime*-rotation;
-        z = Input.GetAxis("Vertical")*Time.deltaTime*velocity;
+        x = Input.GetAxis("Horizontal") * Time.deltaTime * -rotation;
+        z = Input.GetAxis("Vertical") * Time.deltaTime * velocity;
         
-        facingAngle+=x;
-        unitV2 = new Vector2(Mathf.Cos(facingAngle * Mathf.Deg2Rad),Mathf.Sin(facingAngle*Mathf.Deg2Rad));
+        facingAngle += x;
+        unitV2 = new Vector2(Mathf.Cos(facingAngle * Mathf.Deg2Rad), Mathf.Sin(facingAngle * Mathf.Deg2Rad));
     }
 
     private void FixedUpdate()
     {
-        Vector3 auxPos = this.transform.position;
-        cam.transform.position = new Vector3(-unitV2.x*distCam,distCam,-unitV2.y*distCam)+auxPos;
-        this.transform.GetComponent<Rigidbody>().AddForce(new Vector3(unitV2.x, 0, unitV2.y) * z * 3);
+        cam.transform.Rotate(0, -x, 0);
+        Vector3 camPos = this.transform.position;
+        cam.transform.position = Vector3.Lerp(cam.transform.position, camPos, 0.1f);
+
+        this.transform.GetComponent<Rigidbody>().AddForce(cam.transform.forward * z * 3);
     }
 
     void unlockPickUpCategories()
     {
-        for(int n = 0;n<unlocked.Length;n++){
-            if(unlocked[n]==false){
-                if(size>=categorySize[n]){
-                    unlocked[n]=true;
-                    for(int i =0;i<category[n].transform.childCount;i++){
-                        category[n].transform.GetChild(i).GetComponent<Collider>().isTrigger = true;
-                    }
-                }
+        for(int i = 0;i < categories.Count; i++)
+        {
+            if(categories[i].check(size)) {
+                categories.RemoveAt(i);
+            }
+            else {
                 break;
             }
         }
@@ -60,14 +61,14 @@ public class stickBall : MonoBehaviour
     {
         if (other.transform.CompareTag("sticky"))
         {
-            float increase = 0.02f;
-            transform.localScale += new Vector3(increase,increase,increase);
+            float increase = 0.015f;
+            transform.localScale += new Vector3(1, 1, 1) * increase;
             size += increase;
-            distCam +=0.08f;
+            cam.transform.GetChild(0).Translate(0, 0, -increase * 3f);
             other.enabled = false;
             other.transform.SetParent(this.transform);
             unlockPickUpCategories();
-            UIsize.GetComponent<Text>().text = "Mass: "+Math.Round(size,2).ToString();
+            UIsize.text = "Mass: " + Math.Round(size, 2).ToString();
         }
     }
 }
