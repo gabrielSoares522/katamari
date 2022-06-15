@@ -29,19 +29,19 @@ public class stickBall : MonoBehaviour
     void Update()
     {
         x = Input.GetAxis("Horizontal") * Time.deltaTime * -rotation;
-        z = Input.GetAxis("Vertical") * Time.deltaTime * velocity;
+        z = Input.GetAxis("Vertical") * (1 + (size-1)/10) * Time.deltaTime * velocity;
         
         facingAngle += x;
         unitV2 = new Vector2(Mathf.Cos(facingAngle * Mathf.Deg2Rad), Mathf.Sin(facingAngle * Mathf.Deg2Rad));
+        cam.transform.Rotate(0, -x, 0);
+        Vector3 camPos = this.transform.position;
+        cam.transform.position = Vector3.Lerp(cam.transform.position, camPos, 0.1f);
+        this.transform.GetComponent<Rigidbody>().AddForce(cam.transform.forward * z * 3);
     }
 
     private void FixedUpdate()
     {
-        cam.transform.Rotate(0, -x, 0);
-        Vector3 camPos = this.transform.position;
-        cam.transform.position = Vector3.Lerp(cam.transform.position, camPos, 0.1f);
 
-        this.transform.GetComponent<Rigidbody>().AddForce(cam.transform.forward * z * 3);
     }
 
     void unlockPickUpCategories()
